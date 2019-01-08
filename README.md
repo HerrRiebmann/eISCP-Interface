@@ -9,4 +9,4 @@ Startup my Pioneer VSX-1131 with an ESP32 OLED (Wemos) microcontroller, via eISC
 * find right station
 * set volume
 
-[YouTube Video] (Video https://www.youtube.com/watch?v=cbbp1mKjVOo)
+[YouTube Video](https://www.youtube.com/watch?v=cbbp1mKjVOo)
