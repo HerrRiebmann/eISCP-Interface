@@ -17,13 +17,13 @@ bool UnpackReply(uint8_t *buf) {
       endCounter = 0;
 
   if (len == 0) {
-    SetText("Incoming", "Lenght is", "zero!");
+    SetText(incoming, "Lenght is", "zero!");
     return false;
   }
 
   //packet ending found (EOF, CR, LF)
   if (endCounter != sizeof(packetFooterIncoming) - 1) {
-    SetText("Incoming", "Package", "incomplete");
+    SetText(incoming, "Package", "incomplete");
     return false;
   }
 
@@ -41,10 +41,16 @@ bool UnpackReply(uint8_t *buf) {
       startCounter = 0;
 
   start -= startCounter; //Remove lengh("ISCP")
+  //Messages without proper header (Album art cover)
+  if(start >= IncomingBufferSize){
+    SetText("Ignore Msg!", "Start equals", "Buffersize");    
+    ClearIncomingBuffer();
+    return false;    
+  }
 
   //Whatever there may come...
   if (len == IncomingBufferSize) {
-    SetText("Incoming", "Buffer reached");
+    SetText(incoming, "Buffer reached");
     return false;
   }
 
@@ -58,7 +64,7 @@ bool UnpackReply(uint8_t *buf) {
   int endPos = headLength + msgLength - sizeof(packetFooterIncoming) + start;
 
   if (endPos - startPos <= 0) {
-    SetText("Incoming", command, "Empty!");
+    SetText(incoming, command, "Empty!");
     return false;
   }
 
@@ -94,18 +100,23 @@ bool ProcessMessage(char* command, char* message, int messageLength) {
   s.toCharArray(MessageCmd, sizeof(MessageCmd));
   if (s == "MVL") {
     MessageInt = GetByteFromHexString(String(message[0]) + String(message[1]));
-    SetText("Incoming", "Volume", String(MessageInt));
+    SetText(incoming, "Volume", String(MessageInt));
     return true;
   }
   if (s == "FLD") {
     MessageText = GetTextFromByte(message, messageLength);    
     Title = MessageText.substring(0, 10);
     if(Channel == "")
-      SetText("Incoming", Title, ElapsedTime);
+      SetText(incoming, Title, ElapsedTime);
     else
       SetText(Channel, Title, ElapsedTime);
     //UpdateLine2Text(MessageText);
     return true;
+  }
+  //Net/USB File Format Information (64bit)
+  if (s == "NFI") {
+    //ToDo: Seperate values "/"    
+    SetText(incoming, "NFI", GetTextFromByte(message, messageLength));    
   }
   if (s == "NLS") {
     if (message[0] == 'C') { //Cursor Position
@@ -115,14 +126,14 @@ bool ProcessMessage(char* command, char* message, int messageLength) {
         MessageInt = message[1] - 48;//0 == char 48
 
       if (MessageInt == 0xFF)
-        SetText("Incoming", "NLS", "None");
+        SetText(incoming, "NLS", "None");
       else
-        SetText("Incoming", "NLS", String(MessageInt));
+        SetText(incoming, "NLS", String(MessageInt));
     }
     if (message[0] == 'U') { //List Elements UX-Name (X = Position)
       MessageText = String(message).substring(3, messageLength);
       MessageInt = message[1];
-      SetText("Incoming", "NLS", MessageText);
+      SetText(incoming, "NLS", MessageText);
     }
     return true;
   }
@@ -164,22 +175,51 @@ bool ProcessMessage(char* command, char* message, int messageLength) {
         break;
     }
     Channel = MessageText;
-    SetText("Incoming", "ServiceType", MessageText);
+    SetText(incoming, "ServiceType", MessageText);
     return true;
   }
   if (s == "NJA") { //Album Art
-    MessageText = String(message).substring(0, messageLength);
-    SetText("Incoming", "Album Art", MessageText);
+    switch(message[0]){
+      case '0':
+        MessageText = "BMP";        
+      break;
+      case '1':
+        MessageText = "JPEG";
+      break;
+      case '2':
+        MessageText = "URL";
+      break;
+      case 'n':
+        MessageText = "No Image";
+      break;
+    }
+    MessageText += ": ";
+    switch(message[1]){
+      case '0':
+        MessageText += "Start";
+      break;
+      case '1':
+        MessageText += "Next";
+      break;
+      case '2':
+        MessageText += "End";
+      break;
+      case '-':
+        MessageText += "No Image";
+      break;
+    }
+    //MessageText = String(message).substring(2, messageLength);
+    SetText(incoming, "Album Art", MessageText);
     return true;
   }
   if (s == "NMS") { //Net Menu Status
     MessageText = String(message).substring(0, messageLength);
-    SetText("Incoming", "Menu State", MessageText);
+    SetText(incoming, "Menu State", MessageText);
     return true;
   }
   if (s == "NST") { //Net USB Play Status
     MessageText = String(message).substring(0, messageLength);
-    SetText("Incoming", "Play State", MessageText);
+    SetText(incoming, "Play State", MessageText);
     return true;
   }
   if (s == "NTM") { //Time Info "--:--:--/--:--:--"
@@ -190,23 +230,23 @@ bool ProcessMessage(char* command, char* message, int messageLength) {
   }
   if (s == "NAL" || s == "NTI" || s == "NTR") { //Album Info || Title Name || Track Info
     MessageText = String(message).substring(0, messageLength);
-    SetText("Incoming", MessageText);
+    SetText(incoming, MessageText);
     return true;
   }
   if (s == "PWR") {
     MessageBool = GetByteFromHexString(String(message[0]) + String(message[1]));// 00 | 01
     if (MessageBool)
-      SetText("Incoming", "Power", "On");
+      SetText(incoming, "Power", "On");
     else
-      SetText("Incoming", "Power", "Off");
+      SetText(incoming, "Power", "Off");
     return true;
   }
   if (s == "AMT") {
     MessageBool = GetByteFromHexString(String(message[0]) + String(message[1]));
     if (MessageBool)
-      SetText("Incoming", "Mute", "On");
+      SetText(incoming, "Mute", "On");
     else
-      SetText("Incoming", "Mute", "Off");      
+      SetText(incoming, "Mute", "Off");      
     return true;
   }
   if (s == "SLI") {
@@ -250,9 +290,9 @@ bool ProcessMessage(char* command, char* message, int messageLength) {
         break;
     }
     if(MessageText == "")
-      SetText("Incoming", "Input Sel.", String(MessageInt));
+      SetText(incoming, "Input Sel.", String(MessageInt));
     else
-      SetText("Incoming", "Input Sel.", MessageText);
+      SetText(incoming, "Input Sel.", MessageText);
     return true;
   }
   if (s == "UPD") {
@@ -260,16 +300,16 @@ bool ProcessMessage(char* command, char* message, int messageLength) {
     if(MessageBool)
       SetText("Firmware", "Update", "Available");
     else
-      SetText("Incoming", "No Update");
+      SetText(incoming, "No Update");
     return true;
   }
   if (s == "LMD") {
     MessageInt = GetByteFromHexString(String(message[0]) + String(message[1]));
-    SetText("Incoming", "List. Mode", String(MessageInt));    
+    SetText(incoming, "List. Mode", String(MessageInt));    
     return true;
   }
   if (s == "NLU" || s == "NMS") { //List Info Update || Menu Status 
-    SetText("Incoming", "Known but", "unsupported");
+    SetText(incoming, "Known but", "unsupported");
     return true;
   }
 

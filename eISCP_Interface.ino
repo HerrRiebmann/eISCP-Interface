@@ -35,9 +35,11 @@ static const uint8_t lenghtBytePosHigh = 10;  //Message Length 1/2
 static const uint8_t lenghtBytePosLow = 11;   //Message Length 2/2
 static const char commandPrefix[] = "!1"; //Start Character + Destination Unit (Receiver)
 
-const unsigned int IncomingBufferSize = 100;
+const unsigned int IncomingBufferSize = 300;
 unsigned char IncomingBuffer[IncomingBufferSize];
 uint8_t IncomingBufferCounter = 0;
+
+const char* incoming = "Incoming";
 
 String MessageText = "";
 bool MessageBool = false;

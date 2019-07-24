@@ -22,6 +22,9 @@ void RadioBob() {
     return;
   }
 
+  //Disable Net -Images: (Prevent overflowing buffer with images)
+  SendCommand("!1NJADIS");
+
   //Receive: Input, DIM, MUTE, MOT, RAS, PCT, ITV & NDS
 
   //If "See TV" displayed due to declined userdata transfer to Pioneer
