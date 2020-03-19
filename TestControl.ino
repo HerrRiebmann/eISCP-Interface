@@ -39,23 +39,15 @@ void RadioBob() {
   //Set Input to Net
   SetText("Send", "Input: Net");
   SendCommand("!1SLI2B");  
-  
-  WaitForResponse("SLI");
+
+   WaitForResponse("SLI");
   while(MessageInt != 0x2B){
     WaitForResponse("SLI");    
-  }
-  
-  delay(100);
-  //Set Enter TuneIn
-  SetText("Send", "Enter", "(TuneIn)");
-  SendCommand("!1OSDENTER");
-  
-  //Connecting.... 
-
-  WaitForResponse("NLT");
-  while(MessageInt != 0x0E){//TuneIn
-    WaitForResponse("NLT");    
-  }
+  } 
+     
+   //Select List entry No:
+   SetText("Send", "ListIndex: 1");
+   SendCommand("!1NLSI00001");//TuneIn Radio  
   
   WaitForResponse("FLD");
   while(MessageText.indexOf("My Preset") < 0){
@@ -73,7 +65,12 @@ void RadioBob() {
     WaitForResponse("NLS");
   SetText("Send", String(MessageInt), "(RadioBob)");
   //NetUSB List + L = Line | I = Index + Index 00001-99999
-  SendCommand("!1NLSI0000" + String(MessageInt + 1));//Starts at 1, not zero
+  //Int == 54hex = 6 dec 
+  MessageInt -= 47; //-48 but add 1 due to Index starts at 1
+  if(MessageInt < 10)
+    SendCommand("!1NLSI0000" + String(MessageInt));
+  else
+    SendCommand("!1NLSI000" + String(MessageInt));
   WaitForResponse("FLD");
   
   //Set Enter
