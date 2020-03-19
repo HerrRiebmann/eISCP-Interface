@@ -24,3 +24,6 @@ Startup my Pioneer VSX-1131 with an ESP32 OLED (Wemos) microcontroller, via eISC
 - [ ] Optimize WaitForResponse()-Function
 - [ ] Replace Title- & ElapsedTime-globals with a more flexible class
 - [ ] Optimize display output
+
+## Note:
+You have to add the desired radio channel to TuneIn previously, yourself! Then change `while (!MessageText.startsWith("RADIO BOB!"))` with your predilection.
